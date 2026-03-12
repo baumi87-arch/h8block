@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="de" data-role="firma">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>h8block — Legal Case Management</title>
+<style>
+#pw-overlay{position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif}
+#pw-box{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:40px 36px;width:340px;text-align:center}
+#pw-logo{width:48px;height:48px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;margin:0 auto 16px;letter-spacing:-.5px}
+#pw-title{color:#f1f5f9;font-size:20px;font-weight:700;margin-bottom:4px}
+#pw-sub{color:#64748b;font-size:13px;margin-bottom:28px}
+#pw-input{width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:11px 14px;color:#f1f5f9;font-size:14px;font-family:'Inter',sans-serif;outline:none;text-align:center;letter-spacing:.1em;margin-bottom:12px;transition:.15s}
+#pw-input:focus{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+#pw-input::placeholder{color:#475569;letter-spacing:0}
+#pw-btn{width:100%;padding:11px;border-radius:8px;background:#ef4444;color:#fff;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.12s}
+#pw-btn:hover{background:#dc2626}
+#pw-error{color:#f87171;font-size:12px;margin-top:10px;display:none}
+#pw-hint{color:#334155;font-size:11px;margin-top:20px}
+</style>
+<script>
+(function(){
+  var PW = 'h8block2025';
+  if(sessionStorage.getItem('h8b_auth')==='1') return;
+  document.addEventListener('DOMContentLoaded',function(){
+    var overlay=document.getElementById('pw-overlay');
+    var input=document.getElementById('pw-input');
+    var err=document.getElementById('pw-error');
+    function check(){
+      if(input.value===PW){
+        sessionStorage.setItem('h8b_auth','1');
+        overlay.style.transition='opacity .3s';
+        overlay.style.opacity='0';
+        setTimeout(function(){overlay.remove()},300);
+      } else {
+        err.style.display='block';
+        input.value='';
+        input.style.borderColor='#ef4444';
+        setTimeout(function(){input.style.borderColor='';err.style.display='none'},2000);
+      }
+    }
+    document.getElementById('pw-btn').addEventListener('click',check);
+    input.addEventListener('keydown',function(e){if(e.key==='Enter')check()});
+    input.focus();
+  });
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#f1f5f9;color:#1e293b;height:100vh;overflow:hidden;display:flex}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:236px;min-width:236px;background:#0f172a;height:100vh;display:flex;flex-direction:column}
+.sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,#ef4444,#dc2626);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:-.5px;flex-shrink:0}
+.logo-name{color:#fff;font-weight:700;font-size:16px;letter-spacing:-.3px}
+.logo-name em{color:#ef4444;font-style:normal}
+.logo-sub{color:#475569;font-size:10px;font-weight:500;margin-top:1px}
+.sidebar-nav{flex:1;padding:10px 0;overflow-y:auto}
+.nav-group-label{padding:8px 18px 4px;font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.08em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;position:relative;transition:all .12s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{background:#1e293b;color:#e2e8f0;border-left-color:transparent}
+.nav-item.active{background:#1e293b;color:#fff;border-left-color:#ef4444}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.75}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:20px;text-align:center}
+.nav-badge.orange{background:#f97316}
+.sidebar-bottom{border-top:1px solid #1e293b;padding:14px 16px}
+.role-hint{color:#475569;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.role-select{width:100%;background:#1e293b;border:1px solid #334155;border-radius:7px;padding:8px 10px;color:#e2e8f0;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;outline:none;transition:.15s}
+.role-select:focus{border-color:#475569}
+.role-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px}
+.role-pill.firma{background:#1e3a5f;color:#93c5fd}
+.role-pill.lawyer{background:#1a2e1a;color:#86efac}
+.role-pill.influencer{background:#2d1b3d;color:#d8b4fe}
+
+/* ===== MAIN ===== */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;height:54px;padding:0 22px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-left{flex:1;display:flex;align-items:baseline;gap:8px}
+.topbar-title{font-size:15px;font-weight:600;color:#1e293b}
+.topbar-sub{font-size:12px;color:#94a3b8}
+.search{display:flex;align-items:center;gap:7px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:6px 11px;width:260px;font-size:12.5px;color:#94a3b8;cursor:text;transition:.15s}
+.search:hover{border-color:#cbd5e1}
+.search svg{width:13px;height:13px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border-radius:7px;border:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#64748b;position:relative;transition:.12s}
+.icon-btn:hover{background:#f8fafc}
+.icon-btn svg{width:15px;height:15px}
+.notif-dot{position:absolute;top:7px;right:7px;width:7px;height:7px;background:#ef4444;border-radius:50%;border:1.5px solid #fff}
+.user-chip{display:flex;align-items:center;gap:7px;cursor:pointer;padding:4px 8px 4px 4px;border-radius:8px;transition:.12s}
+.user-chip:hover{background:#f8fafc}
+.user-av{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700}
+.user-name{font-size:12px;font-weight:500;color:#334155}
+
+/* ===== CONTENT ===== */
+.content{flex:1;overflow-y:auto;padding:22px}
+.page{display:none}
+.page.active{display:block}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px}
+.stat-label{font-size:11px;color:#94a3b8;font-weight:500;margin-bottom:3px}
+.stat-val{font-size:24px;font-weight:800;color:#1e293b;line-height:1}
+.stat-sub{font-size:11px;color:#10b981;margin-top:4px;font-weight:500}
+.stat-sub.warn{color:#f97316}
+.stat-sub.danger{color:#ef4444}
+
+/* Table card */
+.tcard{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.tcard-head{padding:12px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f5f9}
+.tcard-title{font-size:14px;font-weight:600;flex:1}
+.filters{display:flex;gap:5px}
+.f-btn{padding:5px 10px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;font-size:11.5px;font-weight:500;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Inter',sans-serif;transition:.12s}
+.f-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+.f-btn.on{background:#eff6ff;border-color:#bfdbfe;color:#3b82f6}
+.btn-red{padding:6px 12px;border-radius:7px;border:none;background:#ef4444;color:#fff;font-size:11.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;font-family:'Inter',sans-serif;transition:.12s}
+.btn-red:hover{background:#dc2626}
+
+/* Table */
+table{width:100%;border-collapse:collapse}
+thead tr{background:#f8fafc}
+th{padding:9px 14px;text-align:left;font-size:10.5px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #f1f5f9;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:#64748b}
+td{padding:11px 14px;font-size:12.5px;color:#334155;border-bottom:1px solid #f8fafc;vertical-align:middle}
+.clickrow{cursor:pointer}
+.clickrow:hover td{background:#fafafa}
+tr:last-child td{border-bottom:none}
+.chevron-cell{width:24px;color:#cbd5e1}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:600;white-space:nowrap;gap:4px}
+/* Status */
+.s-neu{background:#f1f5f9;color:#64748b}
+.s-erkannt{background:#eff6ff;color:#3b82f6}
+.s-beweissicherung{background:#f5f3ff;color:#7c3aed}
+.s-opfer{background:#fffbeb;color:#d97706}
+.s-rechts{background:#fff7ed;color:#ea580c}
+.s-datenbeschaffung{background:#ecfeff;color:#0891b2}
+.s-dokumente{background:#eef2ff;color:#4f46e5}
+.s-abmahnung{background:#eff6ff;color:#1d4ed8}
+.s-antwort{background:#fffbeb;color:#b45309}
+.s-geloest{background:#f0fdf4;color:#16a34a}
+.s-eskaliert{background:#fef2f2;color:#dc2626}
+.s-verhandlung{background:#fff7ed;color:#c2410c}
+.s-archiviert{background:#f8fafc;color:#94a3b8}
+/* Category */
+.c-drohung{background:#fef2f2;color:#dc2626}
+.c-beleidigung{background:#fff7ed;color:#ea580c}
+.c-verleumdung{background:#fffbeb;color:#d97706}
+.c-nachrede{background:#fdf4ff;color:#9333ea}
+.c-verhetzung{background:#fef2f2;color:#b91c1c}
+
+/* Rating dots */
+.rating-wrap{display:flex;gap:3px;align-items:center}
+.rdot{width:9px;height:9px;border-radius:50%;background:#e2e8f0;flex-shrink:0}
+.rdot.r1,.rdot.r2{background:#fbbf24}
+.rdot.r3{background:#f97316}
+.rdot.r4,.rdot.r5{background:#ef4444}
+
+/* Influencer cell */
+.inf-cell{display:flex;align-items:center;gap:8px}
+.av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
+.av-sm{width:24px;height:24px;border-radius:6px;font-size:9px}
+.inf-name{font-weight:500;font-size:12.5px;line-height:1.2}
+.inf-handle{font-size:11px;color:#94a3b8}
+.lnk{color:#3b82f6;text-decoration:none;font-size:12px}
+.lnk:hover{text-decoration:underline}
+.comment-preview{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b;font-size:12px;font-style:italic}
+.dmg{font-weight:700;color:#1e293b;font-size:12.5px}
+
+/* ===== DETAIL ===== */
+.det-back{display:flex;align-items:center;gap:5px;color:#64748b;font-size:12px;cursor:pointer;padding:6px 10px;border-radius:7px;border:1px solid #e2e8f0;background:#fff;font-family:'Inter',sans-serif;transition:.12s;margin-bottom:14px}
+.det-back:hover{background:#f8fafc}
+.det-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.det-title-wrap{flex:1}
+.det-tid{font-size:11.5px;color:#94a3b8;font-weight:500;margin-bottom:3px}
+.det-title{font-size:20px;font-weight:700;color:#1e293b;line-height:1.2}
+.det-actions{display:flex;gap:7px;flex-shrink:0}
+.btn-ghost{padding:7px 13px;border-radius:7px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;font-family:'Inter',sans-serif;transition:.12s}
+.btn-ghost:hover{background:#f8fafc}
+
+/* Phase bar */
+.phase-bar{display:flex;border-radius:8px;overflow:hidden;margin-bottom:16px;border:1px solid #e2e8f0}
+.ph{flex:1;padding:7px 4px;text-align:center;font-size:9.5px;font-weight:600;background:#f8fafc;color:#94a3b8;border-right:1px solid #e2e8f0;cursor:pointer;transition:.12s;line-height:1.3}
+.ph:last-child{border-right:none}
+.ph:hover{background:#f1f5f9;color:#64748b}
+.ph.done{background:#f0fdf4;color:#16a34a}
+.ph.active{background:#ef4444;color:#fff}
+
+/* Status tags row */
+.tags-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+
+/* Two-col layout */
+.det-grid{display:grid;grid-template-columns:1fr 300px;gap:18px}
+.det-main{display:flex;flex-direction:column;gap:14px}
+.det-side{display:flex;flex-direction:column;gap:14px}
+
+/* Sections */
+.sec{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+.sec-head{padding:12px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px}
+.sec-ico{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.sec-title{font-size:13px;font-weight:600;flex:1}
+.sec-sub{font-size:11px;color:#94a3b8}
+.sec-body{padding:14px 16px}
+
+/* Fields */
+.frow{display:grid;grid-template-columns:130px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid #f8fafc;align-items:start}
+.frow:last-child{border-bottom:none}
+.flabel{font-size:11.5px;color:#94a3b8;font-weight:500;padding-top:2px}
+.fval{font-size:12.5px;color:#1e293b;font-weight:500}
+.fval.muted{color:#64748b;font-weight:400}
+.finput{font-size:12.5px;color:#1e293b;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;width:100%;font-family:'Inter',sans-serif;outline:none;transition:.15s}
+.finput:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #eff6ff}
+.ftextarea{font-size:12px;color:#1e293b;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;width:100%;font-family:'Inter',sans-serif;outline:none;resize:vertical;transition:.15s;line-height:1.5}
+.ftextarea:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #eff6ff}
+.fselect{font-size:12px;color:#1e293b;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;width:100%;font-family:'Inter',sans-serif;outline:none;background:#fff;cursor:pointer}
+
+/* Evidence grid */
+.ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ev-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;aspect-ratio:16/10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:#94a3b8;font-size:10.5px;transition:.12s}
+.ev-item:hover{background:#f1f5f9;border-color:#cbd5e1}
+.ev-ico{width:32px;height:32px;background:#e2e8f0;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+/* Costs */
+.cost-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f8fafc}
+.cost-item:last-of-type{border-bottom:none}
+.cost-label{font-size:12px;color:#64748b;flex:1}
+.cost-input{width:110px;font-size:13px;color:#1e293b;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-family:'Inter',sans-serif;text-align:right;outline:none;transition:.15s}
+.cost-input:focus{border-color:#93c5fd;box-shadow:0 0 0 3px #eff6ff}
+.cost-unit{font-size:12px;color:#94a3b8;width:12px}
+.cost-total-row{display:flex;align-items:center;gap:8px;padding-top:10px;margin-top:4px;border-top:2px solid #f1f5f9}
+.cost-total-label{font-size:13px;font-weight:700;flex:1}
+.cost-total-val{font-size:16px;font-weight:800;color:#1e293b}
+
+/* Timeline */
+.tl-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.tl-text{font-size:12px;color:#334155;line-height:1.4}
+.tl-time{font-size:11px;color:#94a3b8;margin-top:2px}
+
+/* Info box */
+.infobox{background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:9px 12px;font-size:11.5px;color:#92400e;line-height:1.5;margin-bottom:12px}
+
+/* Confirm buttons */
+.btn-confirm{width:100%;padding:10px;border-radius:8px;background:#4f46e5;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px;transition:.12s}
+.btn-confirm:hover{background:#4338ca}
+.btn-decline{width:100%;padding:9px;border-radius:8px;background:#fff;color:#ef4444;border:1px solid #fecaca;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;transition:.12s}
+.btn-decline:hover{background:#fef2f2}
+
+/* Notification Panel */
+.notif-panel{position:fixed;top:54px;right:14px;width:340px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.1);z-index:200;display:none}
+.notif-panel.open{display:block}
+.notif-panel-head{padding:13px 15px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center}
+.notif-panel-title{font-size:13.5px;font-weight:600;flex:1}
+.notif-read-all{font-size:11px;color:#3b82f6;cursor:pointer}
+.notif-item{padding:11px 14px;border-bottom:1px solid #f8fafc;display:flex;gap:10px;cursor:pointer;transition:.1s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:#fafafa}
+.notif-item.unread{background:#fefce8}
+.notif-item.unread:hover{background:#fef9c3}
+.notif-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.notif-msg{font-size:12px;color:#334155;line-height:1.4;flex:1}
+.notif-time-val{font-size:10.5px;color:#94a3b8;margin-top:2px}
+
+/* Role-based visibility */
+.lawyer-only{display:none!important}
+.influencer-only{display:none!important}
+.not-influencer{}
+.firma-only{}
+
+html[data-role="lawyer"] .firma-only{display:none!important}
+html[data-role="lawyer"] .lawyer-only{display:block!important}
+html[data-role="lawyer"] .influencer-only{display:none!important}
+
+html[data-role="influencer"] .firma-only{display:none!important}
+html[data-role="influencer"] .lawyer-only{display:none!important}
+html[data-role="influencer"] .influencer-only{display:block!important}
+html[data-role="influencer"] .not-influencer{display:none!important}
+
+/* Flex variants for role visibility */
+html[data-role="lawyer"] .lawyer-only.flex-row{display:flex!important}
+html[data-role="influencer"] .influencer-only.flex-row{display:flex!important}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD OVERLAY -->
+<div id="pw-overlay">
+  <div id="pw-box">
+    <div id="pw-logo">H8</div>
+    <div id="pw-title">h8block Portal</div>
+    <div id="pw-sub">Bitte Passwort eingeben um fortzufahren</div>
+    <input id="pw-input" type="password" placeholder="Passwort eingeben…" autocomplete="off">
+    <button id="pw-btn">Zugang bestätigen →</button>
+    <div id="pw-error">Falsches Passwort. Bitte nochmals versuchen.</div>
+    <div id="pw-hint">🔒 Geschützter Bereich · h8block GmbH</div>
+  </div>
+</div>
+
+<!-- ROOT: data-role controls visibility -->
+<div id="app" style="display:flex;width:100%;height:100vh;overflow:hidden">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">H8</div>
+    <div>
+      <div class="logo-name">h8<em>block</em></div>
+      <div class="logo-sub">Legal Case Management</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group-label">Übersicht</div>
+    <div class="nav-item active" onclick="goOverview()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Alle Tickets
+      <span class="nav-badge">6</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Dashboard
+    </div>
+
+    <div class="nav-group-label" style="margin-top:8px">Verwaltung</div>
+    <div class="nav-item not-influencer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Influencer
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Dokumente
+    </div>
+    <div class="nav-item not-influencer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Verlauf
+      <span class="nav-badge orange">3</span>
+    </div>
+    <div class="nav-item firma-only">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Kostenübersicht
+    </div>
+
+    <div class="nav-group-label" style="margin-top:8px" id="sys-label">System</div>
+    <div class="nav-item firma-only" id="sys-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      KI-Detection
+    </div>
+    <div class="nav-item firma-only">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+      Einstellungen
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="role-hint">Ansicht als</div>
+    <select class="role-select" id="roleSelect" onchange="switchRole(this.value)">
+      <option value="firma">🏢 Firma (h8block)</option>
+      <option value="lawyer">⚖️ Anwalt / Kanzlei</option>
+      <option value="influencer">⭐ Influencer</option>
+    </select>
+    <div class="role-pill firma" id="rolePill">Admin-Ansicht</div>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title" id="tbTitle">Alle Tickets</span>
+      <span class="topbar-sub" id="tbSub">· 6 Cases</span>
+    </div>
+
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Suche Ticket, Influencer, User…
+    </div>
+
+    <div class="icon-btn" onclick="toggleNotif()" id="notifBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+      <div class="notif-dot"></div>
+    </div>
+
+    <div class="user-chip">
+      <div class="user-av">CB</div>
+      <span class="user-name">Christoph B.</span>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ===== PAGE: OVERVIEW ===== -->
+    <div class="page active" id="pg-overview">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Gesamt Tickets</div>
+          <div class="stat-val">6</div>
+          <div class="stat-sub">↑ 2 diese Woche</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Aktiv in Bearbeitung</div>
+          <div class="stat-val">4</div>
+          <div class="stat-sub">Laufende Fälle</div>
+        </div>
+        <div class="stat-card not-influencer">
+          <div class="stat-label">Pot. Schadensersatz</div>
+          <div class="stat-val">€ 61K</div>
+          <div class="stat-sub">Gesamt (offen)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Gelöst</div>
+          <div class="stat-val" style="color:#10b981">1</div>
+          <div class="stat-sub">✓ Erfolgreich</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Eskaliert</div>
+          <div class="stat-val" style="color:#ef4444">1</div>
+          <div class="stat-sub danger">⚡ Handlungsbedarf</div>
+        </div>
+      </div>
+
+      <!-- Table card -->
+      <div class="tcard">
+        <div class="tcard-head">
+          <div class="tcard-title">Ticket-Übersicht</div>
+          <div class="filters">
+            <button class="f-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filter</button>
+            <button class="f-btn on">Alle</button>
+            <button class="f-btn">Aktiv</button>
+            <button class="f-btn">🔴 Kritisch</button>
+          </div>
+          <button class="btn-red firma-only"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Neues Ticket</button>
+        </div>
+
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket #</th>
+                <th>Influencer</th>
+                <th>Datum</th>
+                <th>Täter (User)</th>
+                <th>Kommentar</th>
+                <th>Kategorie</th>
+                <th>Schwere</th>
+                <th class="not-influencer">Pot. Schadensersatz</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <!-- Ticket 001 - Eskaliert -->
+              <tr class="clickrow" onclick="goDetail('001')">
+                <td><strong style="font-size:12px">H8-2025-001</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#f43f5e,#ec4899)">SM</div>
+                    <div><div class="inf-name">Sofia Müller</div><div class="inf-handle">@sofiamueller</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">08.03.2025</td>
+                <td><a class="lnk" href="#">@user_xyz123</a></td>
+                <td><div class="comment-preview">"Du solltest dein Leben beenden…"</div></td>
+                <td><span class="badge c-drohung">Drohung</span></td>
+                <td><div class="rating-wrap"><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 15.000</span></td>
+                <td><span class="badge s-eskaliert">⚡ Eskaliert</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+              <!-- Ticket 002 - Abmahnung versandt -->
+              <tr class="clickrow" onclick="goDetail('002')">
+                <td><strong style="font-size:12px">H8-2025-002</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">MW</div>
+                    <div><div class="inf-name">Max Weber</div><div class="inf-handle">@maxweber_official</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">09.03.2025</td>
+                <td><a class="lnk" href="#">@troll_account99</a></td>
+                <td><div class="comment-preview">"Absolute Lügnerin und Betrügerin…"</div></td>
+                <td><span class="badge c-verleumdung">Verleumdung</span></td>
+                <td><div class="rating-wrap"><div class="rdot r4"></div><div class="rdot r4"></div><div class="rdot r4"></div><div class="rdot r4"></div><div class="rdot"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 8.500</span></td>
+                <td><span class="badge s-abmahnung">📬 Abmahnung versandt</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+              <!-- Ticket 003 - Opfer-Bestätigung -->
+              <tr class="clickrow" onclick="goDetail('003')">
+                <td><strong style="font-size:12px">H8-2025-003</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#f43f5e,#ec4899)">SM</div>
+                    <div><div class="inf-name">Sofia Müller</div><div class="inf-handle">@sofiamueller</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">10.03.2025</td>
+                <td><a class="lnk" href="#">@hater2025</a></td>
+                <td><div class="comment-preview">"Was für eine hässliche Person…"</div></td>
+                <td><span class="badge c-beleidigung">Beleidigung</span></td>
+                <td><div class="rating-wrap"><div class="rdot r3"></div><div class="rdot r3"></div><div class="rdot r3"></div><div class="rdot"></div><div class="rdot"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 3.000</span></td>
+                <td><span class="badge s-opfer">⏳ Opfer-Bestätigung</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+              <!-- Ticket 004 - Rechts-Check -->
+              <tr class="clickrow" onclick="goDetail('004')">
+                <td><strong style="font-size:12px">H8-2025-004</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#10b981,#059669)">JB</div>
+                    <div><div class="inf-name">Julia Bauer</div><div class="inf-handle">@juliabauer</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">11.03.2025</td>
+                <td><a class="lnk" href="#">@anon_user777</a></td>
+                <td><div class="comment-preview">"Ich weiß wo du wohnst…"</div></td>
+                <td><span class="badge c-drohung">Drohung</span></td>
+                <td><div class="rating-wrap"><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 20.000</span></td>
+                <td><span class="badge s-rechts">⚖️ Rechts-Check</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+              <!-- Ticket 005 - Gelöst -->
+              <tr class="clickrow" onclick="goDetail('005')">
+                <td><strong style="font-size:12px">H8-2025-005</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#3b82f6,#6366f1)">MW</div>
+                    <div><div class="inf-name">Max Weber</div><div class="inf-handle">@maxweber_official</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">12.03.2025</td>
+                <td><a class="lnk" href="#">@racist_acc</a></td>
+                <td><div class="comment-preview">"Schäm dich für deine Herkunft…"</div></td>
+                <td><span class="badge c-verhetzung">Verhetzung</span></td>
+                <td><div class="rating-wrap"><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div><div class="rdot r5"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 12.000</span></td>
+                <td><span class="badge s-geloest">✓ Gelöst</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+              <!-- Ticket 006 - Neu -->
+              <tr class="clickrow" onclick="goDetail('006')">
+                <td><strong style="font-size:12px">H8-2025-006</strong></td>
+                <td>
+                  <div class="inf-cell">
+                    <div class="av" style="background:linear-gradient(135deg,#10b981,#059669)">JB</div>
+                    <div><div class="inf-name">Julia Bauer</div><div class="inf-handle">@juliabauer</div></div>
+                  </div>
+                </td>
+                <td style="white-space:nowrap;color:#64748b">12.03.2025</td>
+                <td><a class="lnk" href="#">@newuser456</a></td>
+                <td><div class="comment-preview">"Rufmord übelster Art — Falschinfos…"</div></td>
+                <td><span class="badge c-nachrede">üble Nachrede</span></td>
+                <td><div class="rating-wrap"><div class="rdot r2"></div><div class="rdot r2"></div><div class="rdot"></div><div class="rdot"></div><div class="rdot"></div></div></td>
+                <td class="not-influencer"><span class="dmg">€ 2.500</span></td>
+                <td><span class="badge s-neu">Neu</span></td>
+                <td class="chevron-cell"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /tcard -->
+    </div><!-- /pg-overview -->
+
+
+    <!-- ===== PAGE: DETAIL ===== -->
+    <div class="page" id="pg-detail">
+
+      <!-- Back -->
+      <button class="det-back" onclick="goOverview()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        Zurück zur Übersicht
+      </button>
+
+      <!-- Header -->
+      <div class="det-header">
+        <div class="det-title-wrap">
+          <div class="det-tid">Ticket H8-2025-001 · Erstellt 08.03.2025 · Phase 5 — Response &amp; Escalation</div>
+          <div class="det-title">Drohender Kommentar gegen @sofiamueller</div>
+        </div>
+        <div class="det-actions">
+          <button class="btn-ghost">📎 Dokument generieren</button>
+          <button class="btn-ghost not-influencer">✏️ Bearbeiten</button>
+          <button class="btn-red not-influencer">Status ändern</button>
+        </div>
+      </div>
+
+      <!-- Phase progress -->
+      <div class="phase-bar">
+        <div class="ph done">0<br>Mandat</div>
+        <div class="ph done">1<br>Erkennung</div>
+        <div class="ph done">2<br>Rechtl. Prüfung</div>
+        <div class="ph done">3<br>Datenbeschaffung</div>
+        <div class="ph done">4<br>Dokumente</div>
+        <div class="ph active">5<br>Eskalation</div>
+        <div class="ph">6<br>Outcome</div>
+      </div>
+
+      <!-- Tags row -->
+      <div class="tags-row">
+        <span class="badge s-eskaliert" style="font-size:12px;padding:5px 12px">⚡ Eskaliert</span>
+        <span class="badge c-drohung" style="font-size:12px;padding:5px 12px">Drohung (§ 74 StGB)</span>
+        <span style="background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:12px;padding:5px 12px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:4px">🔴 Schweregrad 5/5</span>
+        <span style="background:#f1f5f9;color:#64748b;font-size:12px;padding:5px 12px;border-radius:6px;font-weight:500;display:inline-flex;align-items:center" class="not-influencer">Pot. Schadensersatz: <strong style="color:#1e293b;margin-left:4px">€ 15.000</strong></span>
+        <span style="background:#ecfeff;color:#0891b2;font-size:11px;padding:4px 10px;border-radius:6px;font-weight:600">KI-Confidence: 98%</span>
+      </div>
+
+      <!-- Two-col grid -->
+      <div class="det-grid">
+
+        <!-- LEFT: main -->
+        <div class="det-main">
+
+          <!-- Evidence -->
+          <div class="sec">
+            <div class="sec-head">
+              <div class="sec-ico" style="background:#eff6ff">📸</div>
+              <div class="sec-title">Beweislast (Evidence)</div>
+              <span class="sec-sub">Automatisch gesichert · 08.03.2025 14:32 UTC</span>
+            </div>
+            <div class="sec-body">
+              <div class="frow">
+                <span class="flabel">Kommentar (Original)</span>
+                <span class="fval" style="color:#dc2626;font-style:italic">"Du solltest dein Leben beenden, niemand mag dich hier."</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Instagram User</span>
+                <a class="lnk" href="#">@user_xyz123 ↗</a>
+              </div>
+              <div class="frow">
+                <span class="flabel">Post-Link</span>
+                <a class="lnk" href="#">instagram.com/p/CxY7Kp9mNqR ↗</a>
+              </div>
+              <div class="frow">
+                <span class="flabel">Timestamp</span>
+                <span class="fval">08.03.2025 · 14:28:42 UTC</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Post-ID / Comment-ID</span>
+                <span class="fval muted">CxY7Kp9mNqR · 17988432041</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">KI-Kategorie</span>
+                <span class="fval"><span class="badge c-drohung" style="font-size:11px">Drohung</span> <span style="color:#94a3b8;font-size:11px">· Confidence 98%</span></span>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:#64748b;font-weight:600;margin-bottom:8px">Screenshots &amp; Belege (3)</div>
+              <div class="ev-grid">
+                <div class="ev-item"><div class="ev-ico">📷</div><span>Screenshot 1</span></div>
+                <div class="ev-item"><div class="ev-ico">📷</div><span>Screenshot 2</span></div>
+                <div class="ev-item"><div class="ev-ico">📄</div><span>PDF-Beweis (TS)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal Assessment (Firma + Anwalt) -->
+          <div class="sec not-influencer">
+            <div class="sec-head">
+              <div class="sec-ico" style="background:#fff7ed">⚖️</div>
+              <div class="sec-title">Rechtliche Bewertung</div>
+              <span class="sec-sub">Anwalt &amp; Firma</span>
+            </div>
+            <div class="sec-body">
+              <div class="frow">
+                <span class="flabel">Rechtsgrundlage</span>
+                <span class="fval">§ 74 StGB (Drohung) · § 115 StGB (Beleidigung)</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Straftatbestand</span>
+                <span class="fval">Gefährliche Drohung</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Fallentscheidung</span>
+                <span class="fval" style="color:#10b981">✓ Verfolgen</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Route</span>
+                <select class="fselect">
+                  <option>Strafanzeige (Criminal Route)</option>
+                  <option>Zivilklage (Civil Route)</option>
+                  <option>KoPflG / Platform Reporting</option>
+                </select>
+              </div>
+              <div class="frow">
+                <span class="flabel">Anwalt Notizen</span>
+                <textarea class="ftextarea" rows="3">Strafanzeige eingereicht. Zivilklage parallel eingeleitet. Einstweilige Verfügung beantragt am 11.03.2025.</textarea>
+              </div>
+              <div class="frow">
+                <span class="flabel">Rechtl. Status</span>
+                <select class="fselect">
+                  <option>Eskaliert — Gericht eingeschalten</option>
+                  <option>Verhandlung läuft</option>
+                  <option>Einstweilige Verfügung beantragt</option>
+                  <option>Urteil erwartet</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Costs (Firma + Anwalt) -->
+          <div class="sec not-influencer">
+            <div class="sec-head">
+              <div class="sec-ico" style="background:#f0fdf4">💰</div>
+              <div class="sec-title">Kostenabrechnung</div>
+              <span class="sec-sub">Manuell einzutragen</span>
+            </div>
+            <div class="sec-body">
+              <div class="cost-item">
+                <span class="cost-label">Anwaltskosten</span>
+                <input class="cost-input" type="number" value="2800">
+                <span class="cost-unit">€</span>
+              </div>
+              <div class="cost-item">
+                <span class="cost-label">Gerichtskosten</span>
+                <input class="cost-input" type="number" value="450">
+                <span class="cost-unit">€</span>
+              </div>
+              <div class="cost-item">
+                <span class="cost-label">Andere Kosten</span>
+                <input class="cost-input" type="number" value="120">
+                <span class="cost-unit">€</span>
+              </div>
+              <div class="cost-total-row">
+                <span class="cost-total-label">Gesamt Kosten</span>
+                <span class="cost-total-val">€ 3.370,00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Log -->
+          <div class="sec">
+            <div class="sec-head">
+              <div class="sec-ico" style="background:#f8fafc">📋</div>
+              <div class="sec-title">Aktivitätsprotokoll</div>
+            </div>
+            <div class="sec-body">
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#ef4444"></div>
+                <div><div class="tl-text"><strong>Status geändert:</strong> Abmahnung versandt → Eskaliert</div><div class="tl-time">12.03.2025 · 09:15 Uhr · Anwalt Dr. Müller</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#3b82f6"></div>
+                <div><div class="tl-text"><strong>Keine Reaktion:</strong> 14-Tage-Frist abgelaufen. Eskalation eingeleitet.</div><div class="tl-time">11.03.2025 · 18:00 Uhr · Automatisch</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#f97316"></div>
+                <div><div class="tl-text"><strong>Abmahnung versandt:</strong> Per Einschreiben + E-Mail</div><div class="tl-time">08.03.2025 · 14:00 Uhr · Anwalt Dr. Müller</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#6366f1"></div>
+                <div><div class="tl-text"><strong>Opfer-Bestätigung:</strong> Sofia Müller bestätigt rechtliche Verfolgung</div><div class="tl-time">08.03.2025 · 11:30 Uhr · @sofiamueller</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#10b981"></div>
+                <div><div class="tl-text"><strong>Rechts-Check:</strong> § 74 StGB — Straftatbestand bestätigt durch Anwalt</div><div class="tl-time">08.03.2025 · 10:15 Uhr · Anwalt Dr. Müller</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-dot" style="background:#94a3b8"></div>
+                <div><div class="tl-text"><strong>Ticket erstellt:</strong> KI-Detection aktiv · Confidence 98%</div><div class="tl-time">08.03.2025 · 14:32 Uhr · System (Automatisch)</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /det-main -->
+
+        <!-- RIGHT: sidebar -->
+        <div class="det-side">
+
+          <!-- Influencer Confirmation (ONLY for influencer role) -->
+          <div class="sec influencer-only" style="border-color:#fde68a">
+            <div class="sec-head" style="background:#fffbeb;border-bottom-color:#fde68a">
+              <div class="sec-title" style="color:#d97706">⚠️ Deine Bestätigung ausstehend</div>
+            </div>
+            <div class="sec-body">
+              <p style="font-size:12px;color:#64748b;line-height:1.6;margin-bottom:4px">Möchtest du gegen diesen Kommentar rechtlich vorgehen? Dein Anwalt wartet auf deine Entscheidung.</p>
+              <button class="btn-confirm">✓ Ja, rechtlich vorgehen</button>
+              <button class="btn-decline">✕ Nein, Fall archivieren</button>
+            </div>
+          </div>
+
+          <!-- Status Card -->
+          <div class="sec">
+            <div class="sec-head">
+              <div class="sec-title">Status</div>
+            </div>
+            <div class="sec-body">
+              <div style="margin-bottom:10px">
+                <select class="fselect not-influencer" style="font-weight:600;font-size:13px;color:#dc2626;background:#fef2f2;border-color:#fecaca">
+                  <option>⚡ Eskaliert</option>
+                  <option>📬 Abmahnung versandt</option>
+                  <option>⚖️ Rechts-Check</option>
+                  <option>📝 Opfer-Bestätigung ausstehend</option>
+                  <option>🔎 Datenbeschaffung</option>
+                  <option>📁 Dokumente in Erstellung</option>
+                  <option>💬 Verhandlung</option>
+                  <option>✓ Gelöst</option>
+                  <option>🗄 Archiviert</option>
+                </select>
+                <span class="badge s-eskaliert influencer-only" style="padding:8px 12px;font-size:12px">⚡ Eskaliert</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Erstellt</span>
+                <span class="fval muted">08.03.2025</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Letztes Update</span>
+                <span class="fval muted">12.03.2025</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Laufzeit</span>
+                <span class="fval">4 Tage</span>
+              </div>
+              <div class="frow">
+                <span class="flabel">Phase</span>
+                <span class="fval">5 — Response &amp; Escalation</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Influencer info -->
+          <div class="sec">
+            <div class="sec-head">
+              <div class="sec-title">Influencer (Opfer)</div>
+            </div>
+            <div class="sec-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div class="av" style="background:linear-gradient(135deg,#f43f5e,#ec4899);width:38px;height:38px;border-radius:9px;font-size:13px">SM</div>
+                <div>
+                  <div style="font-weight:600;font-size:13px">Sofia Müller</div>
+                  <div style="font-size:11px;color:#94a3b8">@sofiamueller · 240K Follower</div>
+                </div>
+              </div>
+              <div class="frow">
+                <span class="flabel">Mandat</span>
+                <span class="fval" style="color:#10b981">✓ Unterzeichnet</span>
+              </div>
+              <div class="frow not-influencer">
+                <span class="flabel">E-Mail</span>
+                <span class="fval muted">sofia@agency.at</span>
+              </div>
+              <div class="frow not-influencer">
+                <span class="flabel">Agentur</span>
+                <span class="fval muted">Talent Media GmbH</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Täter/User contact (Firma + Anwalt only) -->
+          <div class="sec not-influencer">
+            <div class="sec-head">
+              <div class="sec-ico" style="background:#fef2f2">👤</div>
+              <div class="sec-title">Täter — Kontaktdaten</div>
+              <span class="sec-sub">Manuell</span>
+            </div>
+            <div class="sec-body">
+              <div class="infobox">ℹ️ Daten aus gerichtlicher Auskunft (§ 18 Abs. 4 ECG) oder Web-Scraping (OSINT)</div>
+              <div class="frow">
+                <span class="flabel">Vorname</span>
+                <input class="finput" placeholder="—" value="">
+              </div>
+              <div class="frow">
+                <span class="flabel">Nachname</span>
+                <input class="finput" placeholder="—">
+              </div>
+              <div class="frow">
+                <span class="flabel">Geburtsdatum</span>
+                <input class="finput" type="date">
+              </div>
+              <div class="frow">
+                <span class="flabel">Straße &amp; Nr.</span>
+                <input class="finput" placeholder="—">
+              </div>
+              <div class="frow">
+                <span class="flabel">PLZ / Ort</span>
+                <input class="finput" placeholder="—">
+              </div>
+              <div class="frow">
+                <span class="flabel">Land</span>
+                <input class="finput" placeholder="Österreich" value="Österreich">
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /det-side -->
+      </div><!-- /det-grid -->
+
+    </div><!-- /pg-detail -->
+
+  </div><!-- /content -->
+</main>
+
+<!-- ===== NOTIFICATION PANEL ===== -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-panel-head">
+    <div class="notif-panel-title">Benachrichtigungen</div>
+    <span class="notif-read-all">Alle als gelesen markieren</span>
+  </div>
+  <div class="notif-item unread">
+    <div class="notif-ico" style="background:#fef2f2">⚡</div>
+    <div>
+      <div class="notif-msg"><strong>H8-2025-001</strong> Status geändert zu <strong>Eskaliert</strong></div>
+      <div class="notif-time-val">Heute, 09:15 Uhr</div>
+    </div>
+  </div>
+  <div class="notif-item unread">
+    <div class="notif-ico" style="background:#fffbeb">📬</div>
+    <div>
+      <div class="notif-msg"><strong>H8-2025-002</strong> Abmahnung erfolgreich versandt</div>
+      <div class="notif-time-val">Heute, 08:45 Uhr</div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div class="notif-ico" style="background:#f0fdf4">✓</div>
+    <div>
+      <div class="notif-msg"><strong>Sofia Müller</strong> hat Ticket H8-2025-003 bestätigt</div>
+      <div class="notif-time-val">Gestern, 11:30 Uhr</div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div class="notif-ico" style="background:#eff6ff">🔍</div>
+    <div>
+      <div class="notif-msg"><strong>2 neue Kommentare</strong> erkannt auf @juliabauer</div>
+      <div class="notif-time-val">Gestern, 09:12 Uhr</div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div class="notif-ico" style="background:#f5f3ff">⚖️</div>
+    <div>
+      <div class="notif-msg"><strong>Rechts-Check abgeschlossen</strong> für H8-2025-004 — Verfolgung bestätigt</div>
+      <div class="notif-time-val">11.03.2025, 16:30 Uhr</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+const html = document.documentElement;
+
+function goOverview() {
+  document.getElementById('pg-overview').classList.add('active');
+  document.getElementById('pg-detail').classList.remove('active');
+  document.getElementById('tbTitle').textContent = 'Alle Tickets';
+  document.getElementById('tbSub').textContent = '· 6 Cases';
+  document.querySelectorAll('.nav-item').forEach((el,i)=>el.classList.toggle('active',i===0));
+  closeNotif();
+}
+
+function goDetail(id) {
+  document.getElementById('pg-overview').classList.remove('active');
+  document.getElementById('pg-detail').classList.add('active');
+  document.getElementById('tbTitle').textContent = 'Ticket H8-2025-' + id;
+  document.getElementById('tbSub').textContent = '· Detail-Ansicht';
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  closeNotif();
+}
+
+function switchRole(role) {
+  html.dataset.role = role;
+  const pill = document.getElementById('rolePill');
+  const labels = {firma:'Admin-Ansicht', lawyer:'Anwalts-Ansicht', influencer:'Influencer-Ansicht'};
+  pill.textContent = labels[role];
+  pill.className = 'role-pill ' + (role==='lawyer'?'lawyer':role==='influencer'?'influencer':'firma');
+}
+
+function toggleNotif() {
+  document.getElementById('notifPanel').classList.toggle('open');
+}
+
+function closeNotif() {
+  document.getElementById('notifPanel').classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBtn');
+  if (!panel.contains(e.target) && !btn.contains(e.target)) closeNotif();
+});
+
+// Cost calculator
+document.querySelectorAll('.cost-input').forEach(inp => {
+  inp.addEventListener('input', function() {
+    const inputs = document.querySelectorAll('.cost-input');
+    let total = 0;
+    inputs.forEach(i => total += parseFloat(i.value)||0);
+    document.querySelector('.cost-total-val').textContent = '€ ' + total.toLocaleString('de-AT',{minimumFractionDigits:2,maximumFractionDigits:2});
+  });
+});
+</script>
+</body>
+</html>
